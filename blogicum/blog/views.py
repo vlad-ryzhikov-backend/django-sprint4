@@ -1,8 +1,17 @@
+from django.forms import DateTimeInput
+from django.urls import reverse_lazy
 from blog.models import Category, Post
 from django.shortcuts import get_object_or_404
-from django.views.generic import ListView, DetailView
+from django.views.generic import CreateView, ListView, DetailView
 
 from .constants import LIMIT
+from .forms import CreatePostForm
+
+class PostCreateView(CreateView):
+    model = Post
+    form_class = CreatePostForm
+    template_name = 'blog/create.html'
+    success_url = reverse_lazy('blog:index') 
 
 class PostListView(ListView):
     model = Post

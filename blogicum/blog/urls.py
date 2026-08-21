@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import PostListView, PostByCategoryListView, PostDetailView
+from .views import PostListView, PostByCategoryListView, PostDetailView, PostCreateView
 
 app_name = 'blog'
 
@@ -12,4 +12,5 @@ urlpatterns = [
         PostByCategoryListView.as_view(),
         name='category_posts'
     ),
+    path('create/', PostCreateView.as_view(), name='create_post')
 ]
