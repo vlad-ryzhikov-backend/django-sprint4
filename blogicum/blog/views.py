@@ -5,28 +5,28 @@ from django.views.generic import ListView, DetailView
 from .constants import LIMIT
 
 class PostListView(ListView):
+    model = Post
     template_name = 'blog/index.html'
-    context_object_name = 'posts'
-
+    paginate_by = LIMIT
 
     def get_queryset(self):
-        return Post.objects.select_related('author', 'category', 'location')
+        return Post.objects.all()
 
 
 class PostByCategoryListView(ListView):
     template_name = 'blog/category.html'
-    context_object_name = 'posts'
+    paginate_by = LIMIT
     
-    def get_queryset(self):
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
         self.category = get_object_or_404(
             Category,
             slug=self.kwargs['slug'],
             is_published=True,
         )
-
-        return Post.objects.filter(
-            category_id=self.category.id
-            ).select_related('author', 'location', 'category')
+    
+    def get_queryset(self):
+        return Post.objects.filter(category_id=self.category.id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -41,7 +41,5 @@ class PostDetailView(DetailView):
 
 
     def get_queryset(self):
-        return Post.objects.filter(is_published=True).select_related(
-            'author', 'category', 'location'
-        )
+        return Post.objects.all()
 

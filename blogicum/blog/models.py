@@ -71,8 +71,7 @@ class Post(BaseModel):
         verbose_name="Категория",
     )
 
-    objects = models.Manager()
-    published = PublishedManager()
+    objects = PublishedManager()
 
     class Meta(BaseModel.Meta):
         verbose_name = "публикация"
