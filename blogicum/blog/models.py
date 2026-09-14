@@ -1,5 +1,5 @@
 from core.models import BaseModel
-from django.auth import get_user_model
+from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.db import models
 from django.template.defaultfilters import truncatechars

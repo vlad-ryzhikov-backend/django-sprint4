@@ -4,7 +4,11 @@ from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
-from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.views.generic import (CreateView,
+                                  DeleteView,
+                                  ListView,
+                                  DetailView,
+                                  UpdateView)
 
 from .constants import LIMIT
 from .forms import (CommentForm, PostCreateForm, UserEditForm,
@@ -173,7 +177,7 @@ class PostByCategoryListView(ListView):
         return context
 
 
-class PostDetailView(UpdateView):
+class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/detail.html'
     context_object_name = 'post'
