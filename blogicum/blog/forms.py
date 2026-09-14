@@ -6,11 +6,11 @@ from .models import Comment, Post
 
 User = get_user_model()
 
+
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ('text',)
-        
         widgets = {
             'text': forms.Textarea(
                 attrs={
@@ -29,13 +29,14 @@ class UserRegistrationForm(UserCreationForm):
             'last_name',
             'email'
         )
-    
+
+
 class UserEditForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email')
-        
-        
+
+
 class PostCreateForm(forms.ModelForm):
     class Meta:
         model = Post
@@ -47,7 +48,7 @@ class PostCreateForm(forms.ModelForm):
             'category',
             'image',
         )
-        
+
         widgets = {
             'pub_date': forms.DateTimeInput(attrs={'type': 'datetime-local'})
         }

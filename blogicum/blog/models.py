@@ -1,13 +1,14 @@
 from core.models import BaseModel
+from django.auth import get_user_model
 from django.conf import settings
 from django.db import models
 from django.template.defaultfilters import truncatechars
-from django.contrib.auth import get_user_model
 
 from .constants import MAX_LENGTH, TITLE_DISPLAY_LENGTH
 from .managers import PublishedManager
 
 User = get_user_model()
+
 
 class Category(BaseModel):
     title = models.CharField("Заголовок", max_length=MAX_LENGTH)
@@ -72,7 +73,11 @@ class Post(BaseModel):
         related_name="posts",
         verbose_name="Категория",
     )
-    image = models.ImageField("Изображение", upload_to="blogicum_images", blank=True)
+    image = models.ImageField(
+        "Изображение",
+        upload_to="blogicum_images",
+        blank=True
+    )
 
     objects = PublishedManager()
 
@@ -103,12 +108,11 @@ class Comment(models.Model):
         auto_now_add=True,
         verbose_name="Дата и время создания"
     )
-    
-    class Meta(BaseModel.Meta):
+
+    class Meta:
         verbose_name = "комментарий"
         verbose_name_plural = "Комментарии"
         ordering = ['created_at']
-            
+
     def __str__(self):
         return f"Комментарий от {self.author.username}"
-    
