@@ -1,35 +1,53 @@
-from django.contrib.auth import get_user_model
 from django import forms
-from django.contrib.auth.forms import UserChangeForm
-from django.urls import reverse_lazy
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm
 
-from .models import Post
+from .models import Comment, Post
 
 User = get_user_model()
 
-class CreatePostForm(forms.ModelForm):
+class CommentForm(forms.ModelForm):
     class Meta:
-        model = Post
-        fields = (
-            'title', 'text',
-            'pub_date', 'location',
-            'category'
-        )
+        model = Comment
+        fields = ('text',)
+        
         widgets = {
-            'pub_date': forms.DateTimeInput(
-                format='%Y-%m-%dT%H:%M',
+            'text': forms.Textarea(
                 attrs={
-                    'type': 'datetime-local',
-                    'class': 'form-control'
+                    'rows': 5,
+                    'placeholder': 'Оставьте комментарий'
                 }
             )
         }
 
 
-# редактирование профиля
-class UserProfileEditForm(UserChangeForm):
-    password = None
-    
+class UserRegistrationForm(UserCreationForm):
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name')
+        fields = UserCreationForm.Meta.fields + (
+            'first_name',
+            'last_name',
+            'email'
+        )
+    
+class UserEditForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email')
+        
+        
+class PostCreateForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = (
+            'title',
+            'text',
+            'pub_date',
+            'location',
+            'category',
+            'image',
+        )
+        
+        widgets = {
+            'pub_date': forms.DateTimeInput(attrs={'type': 'datetime-local'})
+        }

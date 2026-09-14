@@ -6,7 +6,10 @@ SECRET_KEY = 'django-insecure-zh07xkva!)ec4ip47^6^stoo7+xb3p7r#!89p&s+ai!^z9&v&g
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1'
+]
 
 INTERNAL_IPS = [
     '127.0.0.1',
@@ -58,6 +61,8 @@ TEMPLATES = [
     },
 ]
 
+MEDIA_ROOT = BASE_DIR / 'media'
+
 WSGI_APPLICATION = 'blogicum.wsgi.application'
 
 DATABASES = {
@@ -101,5 +106,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'blog:index' 
+
+LOGIN_REDIRECT_URL = 'blog:index'
+LOGOUT_REDIRECT_URL = 'logout'

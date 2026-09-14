@@ -11,6 +11,7 @@ class PublishedManager(models.Manager):
             .filter(
                 is_published=True,
                 pub_date__lte=now,
+                category__is_published=True
             )
             .select_related('author', 'category', 'location')
         )
