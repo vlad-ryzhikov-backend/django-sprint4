@@ -1,6 +1,16 @@
 from django.contrib import admin
 
-from .models import Category, Location, Post
+from .models import Comment, Category, Location, Post
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = (
+        'text',
+        'post',
+        'author',
+        'created_at',
+    )
 
 
 @admin.register(Category)

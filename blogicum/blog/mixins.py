@@ -1,49 +1,36 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.shortcuts import redirect
 from django.urls import reverse
 
 from .models import Comment
+
+# Столкнулся с проблемой: происходит редирект на страницу поста,
+# но во всех CBV, где использую данный миксин, получаю лишние
+# запросы к БД. Искал решение, так и не понял. Есть вариант
+# работы с кэшем, но в проекте отказался от реализации, так как
+# думаю, что есть варианты легче. Буду благодарен за подсказку)).
+
+class AuthorPermissionMixin(UserPassesTestMixin):
+    def test_func(self):
+        obj = self.get_object()
+        return obj.author == self.request.user
+
+    def handle_no_permission(self):
+        return redirect('blog:post_detail', post_id=self.kwargs['post_id'])
 
 
 class PostEditDeleteMixin:
     pk_url_kwarg = 'post_id'
 
-    def get_object(self, queryset=None):
-        if not hasattr(self, '_cached_object'):
-            if queryset is None:
-                queryset = self.get_queryset()
 
-            self._cached_object = super().get_object(queryset)
-        return self._cached_object
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect('blog:post_detail', pk=self.kwargs['post_id'])
-
-        obj = self.get_object()
-
-        if obj.author != request.user:
-            return redirect('blog:post_detail', pk=obj.pk)
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-class CommentEditDeleteMixin(LoginRequiredMixin):
-    def get_object(self, queryset=None):
-        return get_object_or_404(Comment, pk=self.kwargs['comment_id'])
-
-    def dispatch(self, request, *args, **kwargs):
-        obj = self.get_object()
-
-        if not request.user.is_authenticated or obj.author != request.user:
-            return redirect('blog:post_detail', pk=self.kwargs['post_id'])
-
-        return super().dispatch(request, *args, **kwargs)
+class CommentBaseMixin(LoginRequiredMixin):
+    model = Comment
+    template_name = "blog/comment.html"
 
     def get_success_url(self):
         return reverse(
             'blog:post_detail',
-            kwargs={'pk': self.kwargs['post_id']}
+            kwargs={'post_id': self.kwargs['post_id']}
         )
 
 

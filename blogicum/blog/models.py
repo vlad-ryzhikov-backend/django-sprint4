@@ -1,9 +1,9 @@
-from core.models import BaseModel
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.db import models
 from django.template.defaultfilters import truncatechars
 
+from core.models import BaseModel
 from .constants import MAX_LENGTH, TITLE_DISPLAY_LENGTH
 from .managers import PublishedManager
 

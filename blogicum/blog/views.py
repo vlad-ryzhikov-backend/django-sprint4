@@ -1,20 +1,27 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
-from django.utils import timezone
-from django.views.generic import (CreateView,
-                                  DeleteView,
-                                  ListView,
-                                  DetailView,
-                                  UpdateView)
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    ListView,
+    DetailView,
+    UpdateView
+)
 
 from .constants import LIMIT
-from .forms import (CommentForm, PostCreateForm, UserEditForm,
-                    UserRegistrationForm)
-from .mixins import (CommentEditDeleteMixin, PostEditDeleteMixin,
-                     ProfileRedirectMixin)
+from .forms import (
+    CommentForm,
+    PostCreateForm,
+    UserRegistrationForm
+)
+from .mixins import (
+    AuthorPermissionMixin,
+    CommentBaseMixin,
+    PostEditDeleteMixin,
+    ProfileRedirectMixin
+)
 from .models import Category, Comment, Post
 
 User = get_user_model()
@@ -26,18 +33,23 @@ class SignUpView(CreateView):
     success_url = reverse_lazy('login')
 
 
-class CommentDeleteView(CommentEditDeleteMixin, DeleteView):
-    model = Comment
-    template_name = "blog/comment.html"
+class CommentDeleteView(
+    AuthorPermissionMixin,
+    CommentBaseMixin,
+    DeleteView
+):
+    pk_url_kwarg = "comment_id"
 
 
-class CommentEditView(CommentEditDeleteMixin, UpdateView):
-    model = Comment
+class CommentEditView(AuthorPermissionMixin, CommentBaseMixin, UpdateView):
     form_class = CommentForm
-    template_name = 'blog/comment.html'
+    pk_url_kwarg = "comment_id"
 
 
-class CommentCreateView(LoginRequiredMixin, CreateView):
+class CommentCreateView(
+    CommentBaseMixin,
+    CreateView
+):
     model = Comment
     form_class = CommentForm
 
@@ -45,14 +57,7 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         post = get_object_or_404(Post, pk=self.kwargs['post_id'])
         form.instance.post = post
         form.instance.author = self.request.user
-
         return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse(
-            'blog:post_detail',
-            kwargs={'pk': self.kwargs['post_id']}
-        )
 
 
 class PostCreateView(ProfileRedirectMixin, CreateView):
@@ -65,6 +70,7 @@ class PostCreateView(ProfileRedirectMixin, CreateView):
 
 
 class PostDeleteView(
+    AuthorPermissionMixin,
     PostEditDeleteMixin,
     ProfileRedirectMixin,
     DeleteView
@@ -74,7 +80,8 @@ class PostDeleteView(
     context_object_name = 'post'
 
     def get_queryset(self):
-        return Post._base_manager.all()
+        user = self.request.user
+        return Post.objects.smart_filter_for_auth_user(user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -82,26 +89,24 @@ class PostDeleteView(
         return context
 
 
-class PostEditView(PostEditDeleteMixin, UpdateView):
+class PostEditView(AuthorPermissionMixin, PostEditDeleteMixin, UpdateView):
     model = Post
     form_class = PostCreateForm
     template_name = 'blog/create.html'
 
     def get_queryset(self):
-        return Post._base_manager.select_related(
-            'author', 'category', 'location'
-        )
+        return Post.objects.smart_filter_for_auth_user(self.request.user)
 
     def get_success_url(self):
         return reverse(
             'blog:post_detail',
-            kwargs={'pk': self.object.pk}
+            kwargs={'post_id': self.object.pk}
         )
 
 
 class ProfileEditView(ProfileRedirectMixin, UpdateView):
     model = User
-    form_class = UserEditForm
+    fields = ('username', 'first_name', 'last_name', 'email')
     template_name = 'blog/user.html'
 
     def get_object(self, queryset=None):
@@ -122,16 +127,12 @@ class ProfileView(ListView):
         )
 
     def get_queryset(self):
-        if self.request.user == self.user_profile:
-            queryset = Post._base_manager.filter(
-                author=self.user_profile
-            ).select_related('author', 'category', 'location')
-        else:
-            queryset = Post.objects.filter(author=self.user_profile)
-
-        return queryset.annotate(
-            comment_count=Count("comments")
-        ).order_by("-pub_date")
+        return (
+            Post.objects.smart_filter_for_auth_user(self.request.user)
+            .filter(author=self.user_profile)
+            .annotate(comment_count=Count("comments"))
+            .order_by("-pub_date")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -167,9 +168,11 @@ class PostByCategoryListView(ListView):
         )
 
     def get_queryset(self):
-        return self.category.posts.annotate(
-            comment_count=Count('comments')
-        ).order_by('-pub_date')
+        return (
+            Post.objects.filter(category=self.category)
+            .annotate(comment_count=Count('comments'))
+            .order_by('-pub_date')
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -181,21 +184,13 @@ class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/detail.html'
     context_object_name = 'post'
+    pk_url_kwarg = 'post_id'
 
     def get_queryset(self):
-        if not self.request.user.is_authenticated:
-            return Post.objects.all()
-
-        return Post._base_manager.filter(
-            Q(
-                is_published=True,
-                pub_date__lte=timezone.now(),
-                category__is_published=True
-            ) | Q(author=self.request.user)
-        ).select_related('author', 'location', 'category')
+        return Post.objects.smart_filter_for_auth_user(self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["form"] = CommentForm()
-        context["comments"] = self.object.comments.select_related('author')
+        context['form'] = CommentForm()
+        context['comments'] = self.object.comments.select_related('author')
         return context
