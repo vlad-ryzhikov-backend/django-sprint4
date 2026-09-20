@@ -10,6 +10,7 @@ from .models import Comment
 # работы с кэшем, но в проекте отказался от реализации, так как
 # думаю, что есть варианты легче. Буду благодарен за подсказку)).
 
+
 class AuthorPermissionMixin(UserPassesTestMixin):
     def test_func(self):
         obj = self.get_object()
