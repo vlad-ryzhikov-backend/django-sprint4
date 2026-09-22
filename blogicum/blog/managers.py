@@ -17,7 +17,7 @@ class PublishedManager(models.Manager):
             .select_related('author', 'category', 'location')
         )
 
-    def fetch_user_posts(self, user):
+    def apply_filter_for_user(self, user):
         now = timezone.now()
 
         return (

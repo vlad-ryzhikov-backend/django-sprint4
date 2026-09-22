@@ -97,7 +97,7 @@ class PostEditView(AuthorPermissionMixin, PostEditDeleteMixin, UpdateView):
 
     def get_queryset(self):
         user = self.request.user
-        return Post.published.fetch_user_posts(user)
+        return Post.published.apply_filter_for_user(user)
 
     def get_success_url(self):
         return reverse(
@@ -130,7 +130,7 @@ class ProfileView(ListView):
 
     def get_queryset(self):
         return (
-            Post.published.fetch_user_posts(self.request.user)
+            Post.published.apply_filter_for_user(self.request.user)
             .filter(author=self.user_profile)
             .annotate(comment_count=Count("comments"))
             .order_by("-pub_date")
@@ -190,7 +190,7 @@ class PostDetailView(DetailView):
 
     def get_queryset(self):
         user = self.request.user
-        return Post.published.fetch_user_posts(user)
+        return Post.published.apply_filter_for_user(user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
