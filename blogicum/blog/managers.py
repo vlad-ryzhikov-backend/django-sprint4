@@ -17,7 +17,7 @@ class PublishedManager(models.Manager):
             .select_related('author', 'category', 'location')
         )
 
-    def apply_filter_for_user(self, user):
+    def visible_to_user(self, user):
         now = timezone.now()
 
         return (
