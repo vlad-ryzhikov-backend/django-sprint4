@@ -70,9 +70,9 @@ class PostCreateView(ProfileRedirectMixin, CreateView):
 
 
 class PostDeleteView(
-    AuthorPermissionMixin,
     PostEditDeleteMixin,
     ProfileRedirectMixin,
+    AuthorPermissionMixin,
     DeleteView
 ):
     model = Post
@@ -80,8 +80,9 @@ class PostDeleteView(
     context_object_name = 'post'
 
     def get_queryset(self):
-        user = self.request.user
-        return Post.objects.smart_filter_for_auth_user(user)
+        return Post.objects.all().select_related(
+            'author', 'category', 'location'
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -95,7 +96,8 @@ class PostEditView(AuthorPermissionMixin, PostEditDeleteMixin, UpdateView):
     template_name = 'blog/create.html'
 
     def get_queryset(self):
-        return Post.objects.smart_filter_for_auth_user(self.request.user)
+        user = self.request.user
+        return Post.published.fetch_user_posts(user)
 
     def get_success_url(self):
         return reverse(
@@ -128,7 +130,7 @@ class ProfileView(ListView):
 
     def get_queryset(self):
         return (
-            Post.objects.smart_filter_for_auth_user(self.request.user)
+            Post.published.fetch_user_posts(self.request.user)
             .filter(author=self.user_profile)
             .annotate(comment_count=Count("comments"))
             .order_by("-pub_date")
@@ -148,7 +150,7 @@ class PostListView(ListView):
     context_object_name = 'post'
 
     def get_queryset(self):
-        return Post.objects.annotate(
+        return Post.published.annotate(
             comment_count=Count('comments')
         ).order_by('-pub_date')
 
@@ -169,7 +171,7 @@ class PostByCategoryListView(ListView):
 
     def get_queryset(self):
         return (
-            Post.objects.filter(category=self.category)
+            Post.published.filter(category=self.category)
             .annotate(comment_count=Count('comments'))
             .order_by('-pub_date')
         )
@@ -187,7 +189,8 @@ class PostDetailView(DetailView):
     pk_url_kwarg = 'post_id'
 
     def get_queryset(self):
-        return Post.objects.smart_filter_for_auth_user(self.request.user)
+        user = self.request.user
+        return Post.published.fetch_user_posts(user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

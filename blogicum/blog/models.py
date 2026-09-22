@@ -79,7 +79,8 @@ class Post(BaseModel):
         blank=True
     )
 
-    objects = PublishedManager()
+    objects = models.Manager()
+    published = PublishedManager()
 
     class Meta(BaseModel.Meta):
         verbose_name = "публикация"

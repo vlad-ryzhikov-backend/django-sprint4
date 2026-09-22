@@ -17,15 +17,14 @@ class PublishedManager(models.Manager):
             .select_related('author', 'category', 'location')
         )
 
-    def smart_filter_for_auth_user(self, user):
+    def fetch_user_posts(self, user):
         now = timezone.now()
-        curent_user = user.username if user.is_authenticated else None
 
         return (
             super()
             .get_queryset()
             .filter(
-                Q(author__username=curent_user)
+                Q(author=user.id)
                 | Q(
                     is_published=True,
                     pub_date__lte=now,
